@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Skybound Salvager - Mobile</title>
+  <style>
+    body {
+      margin: 0;
+      background: #87CEEB;
+      overflow: hidden;
+      touch-action: none;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      background: #87CEEB;
+    }
+    .controls {
+      position: fixed;
+      bottom: 10px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+    .btn {
+      width: 60px;
+      height: 60px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-size: 20px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 60px;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="controls">
+    <div>
+      <div class="btn" id="leftBtn">◀</div>
+      <div class="btn" id="rightBtn">▶</div>
+    </div>
+    <div>
+      <div class="btn" id="jumpBtn">⭡</div>
+      <div class="btn" id="grappleBtn">🎯</div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    let player = { x: width/2, y: height-50, vx: 0, vy: 0, size: 30, grounded: false };
+    let gravity = 0.5;
+    let keys = {};
+    let grapple = null;
+
+    function drawPlayer() {
+      ctx.fillStyle = "red";
+      ctx.fillRect(player.x - player.size/2, player.y - player.size/2, player.size, player.size);
+    }
+
+    function updatePlayer() {
+      if (keys['left']) player.vx = -5;
+      else if (keys['right']) player.vx = 5;
+      else player.vx = 0;
+
+      player.vy += gravity;
+      player.x += player.vx;
+      player.y += player.vy;
+
+      if (player.y + player.size/2 > height) {
+        player.y = height - player.size/2;
+        player.vy = 0;
+        player.grounded = true;
+      } else {
+        player.grounded = false;
+      }
+    }
+
+    function loop() {
+      ctx.clearRect(0, 0, width, height);
+      updatePlayer();
+      drawPlayer();
+      requestAnimationFrame(loop);
+    }
+
+    // Keyboard Controls
+    window.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys['left'] = true;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys['right'] = true;
+      if ((e.key === ' ' || e.key === 'ArrowUp') && player.grounded) player.vy = -10;
+    });
+
+    window.addEventListener('keyup', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') keys['left'] = false;
+      if (e.key === 'ArrowRight' || e.key === 'd') keys['right'] = false;
+    });
+
+    // Mobile Touch Controls
+    function bindButton(id, downAction, upAction) {
+      const btn = document.getElementById(id);
+      btn.addEventListener('touchstart', e => { e.preventDefault(); downAction(); });
+      btn.addEventListener('touchend', e => { e.preventDefault(); upAction(); });
+    }
+
+    bindButton('leftBtn', () => { keys['left'] = true; }, () => { keys['left'] = false; });
+    bindButton('rightBtn', () => { keys['right'] = true; }, () => { keys['right'] = false; });
+    bindButton('jumpBtn', () => { if (player.grounded) player.vy = -10; }, () => {});
+    bindButton('grappleBtn', () => { alert('Grapple not yet implemented in mobile'); }, () => {});
+
+    loop();
+  </script>
+</body>
+</html>
